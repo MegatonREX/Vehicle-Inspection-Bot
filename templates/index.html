@@ -1,0 +1,716 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car 360° View Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(299deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #11ab7d 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 70vh;
+        }
+
+        .upload-section {
+            padding: 40px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .results-section {
+            padding: 40px;
+            background: white;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 50px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .file-size {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .remove-file:hover {
+            background: #c82333;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            right: 282px;
+            top: 390px;
+            text-align: center;
+            padding: 20px;
+            background: rgb(199 189 239 / 90%);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-header {
+            margin-bottom: 30px;
+        }
+
+        .results-title {
+            font-size: 1.8rem;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .status-complete {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-incomplete {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-card h3 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .summary-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .results-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+
+
+        .view-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .view-360 {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .view-other {
+            background: #e2e3e5;
+            color: #495057;
+        }
+
+        .api-details {
+            font-size: 0.85rem;
+            color: #6c757d;
+            max-width: 300px;
+        }
+
+        .api-details ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .api-details li {
+            padding: 2px 0;
+        }
+
+        .api-details strong {
+            color: #495057;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-section {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Vehicle Inspection</h1>
+            <p>Upload images or video to analyze complete 360° car views</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to upload or drag & drop</div>
+                    <div class="upload-subtext">
+                        Upload multiple images OR a single video<br>
+                        Images: JPG, PNG, JPEG | Videos: MP4, AVI, MOV
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" multiple accept="image/*,video/*">
+                
+                <div id="fileList" class="file-list" style="display: none;"></div>
+                
+                <button id="uploadBtn" class="upload-btn" disabled>
+                    🚀 Analyze Car Views
+                </button>
+
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing your files...</p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div id="noResults" class="no-results">
+                    <div class="no-results-icon">📊</div>
+                    <h3>No Results Yet</h3>
+                    <p>Upload images or video to see the analysis results</p>
+                </div>
+
+                <div id="results" style="display: none;">
+                    <div class="results-header">
+                        <h2 class="results-title">Analysis Results</h2>
+                        <div id="statusIndicator"></div>
+                    </div>
+
+                    <div id="summaryCards" class="summary-cards"></div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                    <table id="resultsTable" class="results-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Frame/Image</th>
+                                <th>View Type</th>
+                                <!-- <th>Confidence</th> -->
+                                <th>API Analysis</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        
+        // DOM Elements
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.querySelector('.upload-area');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loading = document.getElementById('loading');
+        const noResults = document.getElementById('noResults');
+        const results = document.getElementById('results');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const summaryCards = document.getElementById('summaryCards');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultsTable = document.getElementById('resultsTable');
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFileSelection(files);
+        });
+
+        // File input handler
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFileSelection(files);
+        });
+
+        // Handle file selection
+        function handleFileSelection(files) {
+            // Validate file types
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            const validVideoTypes = ['video/mp4', 'video/avi', 'video/mov'];
+            
+            const imageFiles = files.filter(file => validImageTypes.includes(file.type));
+            const videoFiles = files.filter(file => validVideoTypes.includes(file.type));
+            
+            // Check for mixed types
+            if (imageFiles.length > 0 && videoFiles.length > 0) {
+                alert('Please upload either images OR a video, not both.');
+                return;
+            }
+            
+            // Check video count
+            if (videoFiles.length > 1) {
+                alert('Please upload only one video file at a time.');
+                return;
+            }
+            
+            selectedFiles = files;
+            displayFileList();
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        // Display selected files
+        function displayFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.style.display = 'none';
+                return;
+            }
+
+            fileList.style.display = 'block';
+            fileList.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const fileInfo = document.createElement('div');
+                fileInfo.innerHTML = `
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                `;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-file';
+                removeBtn.innerHTML = '×';
+                removeBtn.onclick = () => removeFile(index);
+                
+                fileItem.appendChild(fileInfo);
+                fileItem.appendChild(removeBtn);
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        // Remove file from selection
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFileList();
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Upload files
+        uploadBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            // Show loading
+            loading.style.display = 'block';
+            uploadBtn.disabled = true;
+            results.style.display = 'none';
+            noResults.style.display = 'none';
+
+            // Prepare form data
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                // Replace with your actual API endpoint
+                const response = await fetch('/api/check360/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'), // For Django CSRF protection
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                displayError(error.message);
+            } finally {
+                loading.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Get CSRF token for Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Display results
+        function displayResults(data) {
+            noResults.style.display = 'none';
+            results.style.display = 'block';
+            errorMessage.style.display = 'none';
+
+            // Status indicator
+            const isComplete = data.is_complete_360;
+            statusIndicator.innerHTML = `
+                <div class="status-indicator ${isComplete ? 'status-complete' : 'status-incomplete'}">
+                    ${isComplete ? '✅' : '⚠️'} 
+                    ${isComplete ? 'Complete 360° Coverage' : 'Incomplete 360° Coverage'}
+                </div>
+            `;
+
+            // Summary cards
+            summaryCards.innerHTML = `
+                <div class="summary-card">
+                    <h3>${data.detected_views.length}</h3>
+                    <p>Total Views Detected</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${data.detected_360_views.length}/4</h3>
+                    <p>360° Views Found</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${data.processing_mode}</h3>
+                    <p>Processing Mode</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${data.missing_360_views.length}</h3>
+                    <p>Missing Views</p>
+                </div>
+            `;
+
+            // Results table
+            if (data.details && data.details.length > 0) {
+                resultsTable.style.display = 'table';
+                const tbody = resultsTable.querySelector('tbody');
+                tbody.innerHTML = '';
+
+                data.details.forEach(detail => {
+                    const row = document.createElement('tr');
+                    
+                    // Frame/Image name
+                    const frameCell = document.createElement('td');
+                    frameCell.textContent = detail.frame || detail.image || 'N/A';
+                    
+                    // View type with badge
+                    const viewCell = document.createElement('td');
+                    const is360View = ['front', 'left', 'right', 'rear'].includes(detail.classification);
+                    viewCell.innerHTML = `
+                        <span class="view-badge ${is360View ? 'view-360' : 'view-other'}">
+                            ${detail.classification}
+                        </span>
+                    `;
+                    
+                    // API details
+                    const apiCell = document.createElement('td');
+                    if (detail.api_result && Object.keys(detail.api_result).length > 0) {
+                        const apiDetails = Object.entries(detail.api_result)
+                            .filter(([key, value]) => value && value !== 'unknown')
+                            .map(([key, value]) => `<li><strong>${key.replace(/_/g, ' ')}:</strong> ${value}</li>`)
+                            .join('');
+                        
+                        apiCell.innerHTML = `
+                            <div class="api-details">
+                                <ul>${apiDetails}</ul>
+                            </div>
+                        `;
+                    } else {
+                        apiCell.innerHTML = '<span style="color: #6c757d;">No data available</span>';
+                    }
+                    
+                    row.appendChild(frameCell);
+                    row.appendChild(viewCell);
+                    row.appendChild(apiCell);
+                    tbody.appendChild(row);
+                });
+            } else {
+                resultsTable.style.display = 'none';
+            }
+        }
+
+        // Display error
+        function displayError(message) {
+            noResults.style.display = 'none';
+            results.style.display = 'block';
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = message;
+            resultsTable.style.display = 'none';
+            summaryCards.innerHTML = '';
+            statusIndicator.innerHTML = '';
+        }
+    </script>
+</body>
+</html>
