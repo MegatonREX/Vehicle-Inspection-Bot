@@ -331,7 +331,7 @@ def analyze_frame(frame_path: str, frame_class: str) -> Dict[str, Any]:
             # Run analysis n times and collect responses
             for _ in range(1):
                 initial_payload = {
-                "model": "llama3:8b",
+                "model": "gemma3:4b",
                 "prompt": f"System: {system_prompt}\nUser: {user_question}",
                 "images": [image_b64],
                 "stream": False,
@@ -368,7 +368,7 @@ def analyze_frame(frame_path: str, frame_class: str) -> Dict[str, Any]:
         else:
             # Standard analysis for other views
             payload = {
-                "model": "llama3:8b",
+                "model": "gemma3:4b",
                 "prompt": f"System: {system_prompt}\nUser: {user_question}",
                 "images": [image_b64],
                 "stream": False,
